@@ -1,0 +1,3 @@
+[submodule "oadr30"]
+	path = oadr30
+	url = https://github.com/universaldevices/oadr30.git
