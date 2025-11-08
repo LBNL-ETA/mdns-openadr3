@@ -4,7 +4,7 @@ A MicroPython implementation of an OpenADR 3.0 VEN with local VTN discovery via 
 ## Cloning the Repo
 
 ```
-git clone -b micropython --single-branch https://github.com/chpmk98/openadr-ven.git
+git clone -b micropython --single-branch https://github.com/LBNL-ETA/mdns-openadr3.git
 cd openadr-ven
 ```
 
@@ -54,7 +54,7 @@ e.g., `esptool.py --chip esp32 -p /dev/cu.wchusbserial1410 write_flash -z 0x1000
 pip install adafruit-ampy
 ```
 
-7. Open `load_files.sh` in a text editor, modify the port name (on [line 4](https://github.com/chpmk98/openadr-ven/blob/0b13adaa8651e44b92f6b6e81f1c31589857387a/load_files.sh#L4)) to match your setup, and save the file.
+7. Open `load_files.sh` in a text editor, modify the port name (on [line 4](https://github.com/LBNL-ETA/mdns-openadr3/blob/1d8d00105897fdbd7c76aed648528522cc4b1cb9/load_files.sh#L4)) to match your setup, and save the file.
 
 8. Open `files_to_load/wifi_credentials.py` in a text editor, add your local Wi-Fi credentials, and save the file. If you are connected to Ethernet, I _think_ you can skip this step, but I have not tested using Ethernet so I cannot promise that the program will still work.
 
@@ -120,7 +120,7 @@ To discover and connect to a VTN, you must now add a VTN to the local area netwo
 
 ## Troubleshooting notes
  - __The ESP32 must be in Read-Eval-Print Loop (REPL) mode when loading files with `ampy`,__ otherwise `ampy` will hang indefinitely. This is automatically true when only the firmware is installed, but after files are loaded, you must _hold the `BUT1` button_ when uploading new or modified files.
-   - `BUT1` is defined as the drop-to-REPL button in [line 59](https://github.com/chpmk98/openadr-ven/blob/0b13adaa8651e44b92f6b6e81f1c31589857387a/files_to_load/ven.py#L59) of `files_to_load/ven.py` and regularly polled throughout the program (e.g., while scanning for a VTN on the local area network; [line 229](https://github.com/chpmk98/openadr-ven/blob/0b13adaa8651e44b92f6b6e81f1c31589857387a/files_to_load/ven.py#L229) of `files_to_load/ven.py`)
+   - `BUT1` is defined as the drop-to-REPL button in [line 59](https://github.com/LBNL-ETA/mdns-openadr3/blob/1d8d00105897fdbd7c76aed648528522cc4b1cb9/files_to_load/ven.py#L59) of `files_to_load/ven.py` and regularly polled throughout the program (e.g., while scanning for a VTN on the local area network; [line 229](https://github.com/LBNL-ETA/mdns-openadr3/blob/1d8d00105897fdbd7c76aed648528522cc4b1cb9/files_to_load/ven.py#L229) of `files_to_load/ven.py`)
    - Modifications to the program should include places where the REPL button is polled and the program drops to REPL as needed, to allow `ampy` to upload files when reprogramming. Whether or not the program successfully drops to REPL can be confirmed by observing ESP32 output through the serial terminal.
    - If the ESP32 gets stuck in a state where it never drops to REPL, you can reprogram the ESP32 by using `esptool.py` to erase the entire flash, flash the firmware, and load in files again.
 
@@ -141,7 +141,7 @@ This VEN was tested with the OpenADR3 VTN Reference Implementation that was modi
   - `requires_auth`
   - `openapi_url="https://www.openadr.org/openadr-3-0"`
 
-\* These fields are necessary (i.e., used in [ven.py](https://github.com/chpmk98/openadr-ven/blob/0b13adaa8651e44b92f6b6e81f1c31589857387a/files_to_load/ven.py#L116)) to find and connect to the local VTN.
+\* These fields are necessary (i.e., used in [ven.py](https://github.com/LBNL-ETA/mdns-openadr3/blob/1d8d00105897fdbd7c76aed648528522cc4b1cb9/files_to_load/ven.py#L116)) to find and connect to the local VTN.
 
 ## Outstanding TODOs
 
@@ -150,19 +150,19 @@ This branch is currently a rough proof-of-concept for service discovery and mess
  - There is no `datetime` module for MicroPython, so in `files_to_load/oadr30/vtn.py`, I replaced `datetime.now()` with `time.time()` and replaced `timedelta` with integer numbers of seconds. This should be functional, but I never set the `time` module, so `time.time()` returns some time in the year 2000, which is incorrect. Incorporating some way to grab the actual time and set the `time` module would be useful.
  - The `Event` class in `files_to_load/oadr30/events.py` relies heavily on the `IntervalPeriod` and `Intervals` classes in `files_to_load/oadr30/interval.py`, which relies on the `datetime` Python module and several other time-related libraries in the `ISO8601_DT` class in `datetime_util.py`. In a perfect world, someone would get all this time-keeping working and debugged in MicroPython, and thus have a functional `Events` class. I gave up and commented out lines in `files_to_load/oadr30/vtn.py` where `Events` was used to parse JSON packets received from the VTN, and instead save and display the raw JSON packets directly. Updating the code to parse JSON events more intelligently could be useful.
  - The `Programs` class does not work in `files_to_load/oadr30/vtn.py` for some reason -- `Program(response.json())` returns `None` when trying to parse JSON packets received from the VTN. I did not bother to troubleshoot this, and instead save and display the raw JSON packets directly. Updating the code to parse JSON programs more intelligently could be useful.
- - This code base currently only prints out to serial terminal and does not interface with any displays or outputs. Adding in some PWM control based on the received prices, as we did for the [may22demo](https://github.com/chpmk98/openadr-ven/blob/ca39435994e2a826c03de6a90d441be5884bad0e/hvac.py#L125), would be cool.
- - I used `print` statements instead of `logging` statements throughout my code. Changing these to `logging` statements could be useful. There are [some examples](https://github.com/chpmk98/openadr-ven/blob/0b13adaa8651e44b92f6b6e81f1c31589857387a/files_to_load/oadr30/vtn.py#L3) of this in the code base already.
- - The current code base is inconsistent with the published [specifications](https://github.com/oadr3-org/specification/blob/main/3.1.0/Definition.md#local-scenarios) for discovering local VTNs. Updating the code to align with the listed specifications could be useful.
+ - This code base currently only prints out to serial terminal and does not interface with any displays or outputs. Adding in some PWM control based on the received prices would be cool.
+ - I used `print` statements instead of `logging` statements throughout my code. Changing these to `logging` statements could be useful. There are [some examples](https://github.com/LBNL-ETA/mdns-openadr3/blob/1d8d00105897fdbd7c76aed648528522cc4b1cb9/files_to_load/oadr30/vtn.py#L3) of this in the code base already.
+ - The current code base is inconsistent with the published OpenADR3 specifications for discovering local VTNs. Updating the code to align with the listed specifications could be useful.
    - This code does not utilize the `requires_auth` boolean TXT record when connecting to a VTN, but instead always authenticates. I believe authentication is done somewhere in `files_to_load/oadr30/vtn.py`, but the exact location escapes me.
    - This code uses IP addresses to connect instead of using the `.local` hostname.
-   - This code supports end-user configuration of the VTN URL, `clientID`, and `clientSecret` through the configuration file at `files_to_load/configs/default.json`. The [main branch](https://github.com/chpmk98/openadr-ven/tree/main) of this repo has an example configuration file at `configs/olivine.json` that builds on top of the default configuration file and includes a [full VTN URL](https://github.com/chpmk98/openadr-ven/blob/e3f6f0460d12ec15996496a35ffa223ec062a52b/configs/olivine.json#L14). Whether you want to expose the rest of the contents of the configuration file to the end-user or if you want to create a user-level config file with only the VTN URL, `clientID`, and `clientSecret` fields available is up to you.
+   - This code supports end-user configuration of the VTN URL, `clientID`, and `clientSecret` through the configuration file at `files_to_load/configs/default.json`. The [main branch](https://github.com/LBNL-ETA/mdns-openadr3/tree/main) of this repo has an example configuration file at `configs/olivine.json` that builds on top of the default configuration file and includes a [full VTN URL](https://github.com/LBNL-ETA/mdns-openadr3/blob/8010ec583f093f702a2774166395c89ebd198ede/configs/olivine.json#L14). Whether you want to expose the rest of the contents of the configuration file to the end-user or if you want to create a user-level config file with only the VTN URL, `clientID`, and `clientSecret` fields available is up to you.
 
 ## Externally-sourced code 
 This repo includes code that has been copied and/or modified from existing sources.
  - `files_to_load/http.py` contain just enough `HTTPStatus` values for `files_to_load/oadr30/vtn.py` to function. These values were copied from the [cpython/Lib/http](https://github.com/python/cpython/blob/3.13/Lib/http/__init__.py) source code.
  - `files_to_load/traceback.py` was downloaded and copied over from [micropython-traceback](https://pypi.org/project/micropython-traceback/).
  - `files_to_load/logging` was downloaded and copied over from [micropython-logging](https://pypi.org/project/micropython-logging/).
- - `files_to_load/oadr30` contains files from [universaldevices/oadr30](https://github.com/universaldevices/oadr30/tree/main) that were copied over and trimmed and hacked until they ran in MicroPython.
+ - `files_to_load/oadr30` contains files from [universaldevices/oadr30](https://github.com/universaldevices/oadr30/tree/main) that were copied over and modified until they ran in MicroPython.
 
 
 ## Copyright
